@@ -1,5 +1,14 @@
+from __future__ import print_function
+
 import json
-from urllib.request import Request, urlopen
+import sys
+
+if sys.version_info[0] == 2:
+    from urllib2 import Request, HTTPError, urlopen
+else:
+    from urllib.request import Request, urlopen
+    from urllib.error import HTTPError
+
 from django.conf import settings
 
 class PushyAPI:
@@ -25,6 +34,6 @@ class PushyAPI:
         try:
            # Actually send the push
            response = urlopen(req, json.dumps(postData))
-        except urllib2.HTTPError as e:
+        except HTTPError as e:
            # Print response errors
            print("Pushy API returned HTTP error " + str(e.code) + ": " + e.read())
