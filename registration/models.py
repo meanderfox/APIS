@@ -13,7 +13,7 @@ class LookupTable(models.Model):
     name = models.CharField(max_length=200)
 
     def __str__(self):
-      return self.name
+      return self.name or '--'
 
     class Meta:
         abstract = True
@@ -36,7 +36,7 @@ class Discount(models.Model):
     reason = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-      return self.codeName
+      return self.codeName or '--'
 
     def isValid(self):
         now = timezone.now()
@@ -62,7 +62,9 @@ class PriceLevelOption(models.Model):
     description = models.TextField(blank=True)
 
     def __str__(self):
-        return '{0} (${1})'.format(self.optionName, self.optionPrice)
+        if self.optionPrice:
+            return '{} (${})'.format(self.optionName or '--', self.optionPrice)
+        return '{} (FREE)'.format(self.optionName or '--')
 
     def getList(self):
         if self.optionExtraType in ["int", "bool", "string"]:
@@ -95,7 +97,7 @@ class PriceLevel(models.Model):
     isMinor = models.BooleanField(default=False)
 
     def __str__(self):
-      return self.name
+      return self.name or '--'
 
 class Charity(LookupTable):
     url = models.CharField(max_length=500,
@@ -184,7 +186,7 @@ class TableSize(LookupTable):
 
     def __str__(self):
       if self.event is None:
-        return self.name
+        return self.name or '--'
       return self.name + " " + self.event.name
 
 class Department(models.Model):
@@ -192,7 +194,7 @@ class Department(models.Model):
     volunteerListOk = models.BooleanField(default=False)
 
     def __str__(self):
-      return self.name
+      return self.name or '--'
 
 #End lookup and supporting tables
 
@@ -236,11 +238,8 @@ class Attendee(models.Model):
     def __str__(self):
       if self is None:
           return "--"
-      # FIXME: Why are we afraid of Unicode here?
       try:
-        test1 = self.firstName.decode('ascii')
-        test2 = self.lastName.decode('ascii')
-        return '%s %s' % (self.firstName, self.lastName)
+        return '{} {}'.format(self.firstName or '--', self.lastName or '--')
       except:
         return '--attendee--'
 
@@ -256,12 +255,12 @@ class Badge(models.Model):
 
     def __str__(self):
         if self.badgeNumber is not None or self.badgeNumber == '':
-            return '"{0}" #{1} ({2})'.format(self.badgeName, self.badgeNumber, self.event).encode("utf-8")
+            return '"{0}" {1} ({2})'.format(self.badgeName or '--', self.badgeNumber or '--', self.event or '--')
         if self.badgeName != '':
-            return '"{0}" ({1})'.format(self.badgeName, self.event).encode("utf-8")
+            return '"{0}" ({1})'.format(self.badgeName or '--', self.event or '--')
         if self.registeredDate is not None:
-            return "[Orphan {0}]".format(self.registeredDate)
-        return "Badge object {0}".format(self.registrationToken)
+            return "[Orphan {0}]".format(self.registeredDate or '--')
+        return "Badge object {0}".format(self.registrationToken or '--')
 
     def isMinor(self):
       birthdate = self.attendee.birthdate
@@ -352,7 +351,7 @@ class Staff(models.Model):
     checkedIn = models.BooleanField(default=False)
 
     def __str__(self):
-      return '%s %s' % (self.attendee.firstName, self.attendee.lastName)
+      return '{} {}'.format(self.attendee.firstName or '--', self.attendee.lastName or '--')
 
     def getBadge(self):
         badge = Badge.objects.filter(attendee=self.attendee,event=self.event).last()
@@ -398,7 +397,7 @@ class Dealer(models.Model):
     logo = models.CharField(max_length=500, blank=True)
 
     def __str__(self):
-      return '%s %s' % (self.attendee.firstName, self.attendee.lastName)
+      return '{} {}'.format(self.attendee.firstName, self.attendee.lastName)
 
     def getPartnerCount(self):
       partnercount = self.dealerasst_set.count()
@@ -434,7 +433,7 @@ class DealerAsst(models.Model):
     event = models.ForeignKey(Event, null=True, blank=True, on_delete=models.CASCADE)
 
     def __str__(self):
-        return self.name
+        return self.name or '--'
 
 
 # Start order tables
@@ -510,13 +509,13 @@ class OrderItem(models.Model):
                 self.order.status,
                 self.order.total,
                 self.badge.badgeName,
-                ).encode("utf-8")
+                )
         except:
             try:
                 return 'Incomplete from {}: "{}" ({})'.format(
                     self.enteredBy,
                     self.badge.badgeName,
-                    self.priceLevel).encode("utf-8")
+                    self.priceLevel)
             except:
                 return "OrderItem object"
 
@@ -534,7 +533,7 @@ class AttendeeOptions(models.Model):
 
     def __str__(self):
         #return "[{0}] - {1}".format(self.orderItem.decode("utf-8"), 1).encode("utf-8")
-        return "[{0}] - {1}".format(str(self.orderItem).decode("utf-8"), self.option).encode("utf-8")
+        return "[{0}] - {1}".format(str(self.orderItem), self.option)
 
 
 class BanList(models.Model):
